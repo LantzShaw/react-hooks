@@ -1,70 +1,76 @@
-# Getting Started with Create React App
+### Records
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+1. `useRef` **跨渲染周期存储数据**，而且对它修改也不会引起组件渲染
+   参考文章(没怎么看懂): https://blog.csdn.net/hjc256/article/details/102587037
 
-## Available Scripts
+2. `useRef` 与 `createRef` 的区别?
+   reateRef 每次渲染都会返回一个新的引用，而 useRef 每次都会返回相同的引用。
 
-In the project directory, you can run:
+3. `e.preventDefault()` 有什么用?
+   阻止浏览器的墨认事件，例如: form 表单，里面有 button，不想 button 触发，不阻止，则会触什么效果？ 会出现【？】吗
 
-### `yarn start`
+4. 使用 useReducer()，如何合并多个 reduer?
+   useReducer() 参考文章: https://www.robinwieruch.de/react-usereducer-hook
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+5. 如何开发 react 组件或者插件?
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+6. createContext，useReducer 使用  场景
 
-### `yarn test`
+7. 高阶组件的使用
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**合并多个 reducer**
 
-### `yarn build`
+```js
+import React, { createContext, useReducer } from 'react'
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+export const hooksContext = createContext('context')
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+const Provider = hooksContext.Provider
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+function combineReducers(reducers) {
+    return function (state = {}, action) {
+        return Object.keys(reducers).reduce((newState, key) => {
+            newState[key] = reducers[key](state[key], action)
+            return newState
+        }, {})
+    }
+}
 
-### `yarn eject`
+export const withContext = (reducer, initialState) => {
+    let stateKeysLength = Object.keys(initialState).length
+    let reducerKeysLength = typeof reducer === 'function' ? 1 : Object.keys(reducer).length
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+    if (stateKeysLength !== reducerKeysLength) {
+        throw Error('The length of reducer is not equal the length of initialState')
+    }
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+    let combinedReducer = combineReducers(reducer)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+    return InnerComp => {
+        return () => {
+            const [state, dispatch] = useReducer(combinedReducer, initialState)
+            return (
+                <Provider value={{ state, dispatch }}>
+                    <InnerComp />
+                </Provider>
+            )
+        }
+    }
+}
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```js
+<form onSubmit={handleSubmit}>
+    <label>
+        Name:
+        <input type="text" value={this.state.value} onChange={this.handleChange} />
+    </label>
+    <input type="submit" value="Submit" />
+</form>
+```
 
-## Learn More
+### Cords
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```js
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
